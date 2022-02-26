@@ -15,5 +15,36 @@ class EBomb:
                  verbose: bool = True): ...
 ```
 
+```python
+# EBomb/services.py
+class Service:
+    __slots__ = ('url', 'method', 'netloc')
+
+    def __init__(self, url: str, method: str):
+        ...
+
+    def __repr__(self):
+        ...
+
+    def request(self, mail: str, proxies: Optional[EasyProxies.ProxyDescriptor] = None) -> Response:
+        ...
+
+
+services: list[Service] = [...]
+```
+
+## Ebomb/services.json
+
+```json
+[
+  {
+    "url": ...,
+    "method": ...
+  },
+  ...
+]
+```
+
 ### CLI
+
 > python -m Ebomb -h

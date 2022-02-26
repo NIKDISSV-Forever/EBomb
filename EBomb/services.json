@@ -1197,6 +1197,6 @@
   },
   {
     "url": "https://lists.secondlife.com/cgi-bin/mailman/subscribe/viewer-development-commits?email=%s&fullname=&pw=123456789&pw-conf=123456789&language=en&digest=0&email-button=Subscribe",
-    "method": "GETа"
+    "method": "GET"
   }
 ]

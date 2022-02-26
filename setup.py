@@ -1,7 +1,7 @@
 import setuptools
 
 with open('README.md', encoding='UTF-8') as f:
-    long_description = f.read()
+    long_description = f.read().strip()
 with open('requires.txt', encoding='UTF-8') as f:
     install_requires = f.read().splitlines()
 
@@ -13,11 +13,11 @@ setuptools.setup(
     author="Nikita (NIKDISSV)",
     author_email="nikdissv.forever@protonmail.com",
 
-    description="proxytv.ru IPTV Channels Parser and Robot",
+    description="Email Bomber",
     long_description=long_description,
     long_description_content_type="text/markdown",
 
-    url="https://github.com/NIKDISSV-Forever/ProxyTVRobot",
+    url="https://github.com/NIKDISSV-Forever/EBomb",
     install_requires=install_requires,
     packages=setuptools.find_packages(),
 

@@ -1,3 +1,4 @@
+import json
 import sys
 from multiprocessing.pool import ThreadPool
 
@@ -61,6 +62,23 @@ class EBomb:
         print(
             f'{service.netloc:^{self._max_netloc_len}} / {service.method:<4}'
             f' | {email:^{self._max_email_len}}{f" | {str(_proxy):^22}" if _proxy else ""} | {resp}')
+        if service in services and code in (301, 308, 404, 405):
+            pos = services.index(service)
+            if code in (301, 308):
+                new_loc = resp.headers.get('Location') if resp is not None else None
+                if new_loc:
+                    services[pos].url = new_loc
+                    services[pos].method = 'GET' if code == 301 else 'POST'
+                else:
+                    services.pop(pos)
+            elif code == 404:
+                services.pop(pos)
+            else:
+                meth = services[pos].method
+                if meth.upper() == 'GET':
+                    services[pos].method = 'POST'
+                else:
+                    services.append(Service(service.url, 'GET'))
         if _proxy in proxies and code in (None, 401, 403, 407):
             proxies.remove(_proxy)
 
@@ -68,3 +86,5 @@ class EBomb:
         if self._not_verbose:
             sys.stdout = sys.__stdout__
             sys.stderr = sys.__stderr__
+        with open(JSON_DB_FILE_PATH, 'wb') as update_json:
+            json.dump([{'url': serv.url, 'method': serv.method} for serv in services], update_json)
