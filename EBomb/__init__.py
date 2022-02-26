@@ -83,6 +83,7 @@ class EBomb:
             proxies.remove(_proxy)
 
     def __del__(self):
+        print('Goodbye!')
         if self._not_verbose:
             sys.stdout = sys.__stdout__
             sys.stderr = sys.__stderr__
