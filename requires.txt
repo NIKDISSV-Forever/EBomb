@@ -1,0 +1,4 @@
+requests
+EasyProxies
+pysocks
+fake_useragent
