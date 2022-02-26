@@ -38,10 +38,9 @@ services: list[Service] = [...]
 ```json
 [
   {
-    "url": ...,
-    "method": ...
-  },
-  ...
+    "url": "...",
+    "method": "..."
+  }
 ]
 ```
 
