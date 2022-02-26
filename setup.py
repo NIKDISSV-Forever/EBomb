@@ -8,7 +8,7 @@ with open('requires.txt', encoding='UTF-8') as f:
 setuptools.setup(
     name="EBomb",
 
-    version="1.0.0",
+    version="1.0.1",
 
     author="Nikita (NIKDISSV)",
     author_email="nikdissv.forever@protonmail.com",
