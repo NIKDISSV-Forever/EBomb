@@ -30,7 +30,7 @@ class EBomb:
         self._max_email_len = max(len(e) for e in targets)
         if proxy:
             self.__proxies = [*spys.me.Getters.get_socks5_proxies()]  # Proxies.get(limit=20, type='socks5')
-            self._working_proxy = sorted(self.__proxies)[0]
+            self._working_proxy = sorted(self.__proxies, key=str)[0]
         else:
             self._working_proxy = None
             self.__proxies = []
@@ -40,7 +40,7 @@ class EBomb:
     @property
     def working_proxy(self):
         if not (self._working_proxy and self._working_proxy in self.proxies):
-            self._working_proxy = sorted(self.proxies)[0]
+            self._working_proxy = sorted(self.proxies, key=str)[0]
         return self._working_proxy
 
     @property
