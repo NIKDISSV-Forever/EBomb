@@ -1,17 +1,20 @@
+from __future__ import annotations
+
 import json
-import os.path
+import pathlib
 import urllib.request
-from typing import Optional
+from http.client import HTTPResponse
 from urllib.parse import urlparse
 
 import EasyProxies
+import spys.me
 from requests import Response, request
 
 from EBomb.ua import random_ua
 
 __all__ = ('Service', 'services', 'JSON_DB_FILE_PATH')
 
-JSON_DB_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'services.json')
+JSON_DB_FILE_PATH = pathlib.Path(__file__).parent / 'services.json'
 
 
 class Service:
@@ -23,23 +26,30 @@ class Service:
         self.method = method.upper()
 
     def __repr__(self):
-        return f'<{self.__class__.__name__}({self.netloc}..., {self.method})>'
+        return f'<{self.__class__.__name__}({self.netloc!r}, {self.method!r})>'
 
-    def request(self, mail: str, proxies: Optional[EasyProxies.ProxyDescriptor] = None) -> Response:
+    def request(self, mail: str, proxies: EasyProxies.ProxyDescriptor | spys.me.BaseProxyView = None) -> Response:
+        if isinstance(proxies, EasyProxies.ProxyDescriptor):
+            proxies = proxies.as_requests_proxy if proxies else None
+        else:
+            proxies = f'socks5://{proxies}'
+            proxies = {'http': proxies, 'https': proxies}
+
         for ua_n in ('user-agent', 'User-Agent'):
             resp = request(self.method, self.url.replace('%s', mail), headers={ua_n: random_ua()},
-                           proxies=proxies.as_requests_proxy if proxies else None)
-            if resp.status_code == 403: continue
+                           proxies=proxies, timeout=10)
+            if resp.status_code == 403:
+                continue
             break
         return resp
 
 
 def _get_services_from_json():
-    if not os.path.isfile(JSON_DB_FILE_PATH):
-        download = urllib.request.urlopen('https://github.com/NIKDISSV-Forever/EBomb/blob/main/EBomb/services.json'
-                                          '?raw=true')
-        with open(JSON_DB_FILE_PATH, 'wb') as f:
-            f.write(download.read())
+    if not (JSON_DB_FILE_PATH.is_file() and JSON_DB_FILE_PATH.stat().st_size):
+        download: HTTPResponse
+        with urllib.request.urlopen('https://github.com/NIKDISSV-Forever/EBomb/blob/main/EBomb/services.json'
+                                    '?raw=true') as download:
+            JSON_DB_FILE_PATH.write_bytes(download.read())
     with open(JSON_DB_FILE_PATH, 'rb') as to_load:
         return json.load(to_load)
 
