@@ -8,7 +8,7 @@ with open('requires.txt', encoding='UTF-8') as f:
 setuptools.setup(
     name="EBomb",
 
-    version="2.0.2",
+    version="2.0.3",
 
     author="Nikita (NIKDISSV)",
     author_email="nikdissv@proton.me",
@@ -31,5 +31,5 @@ setuptools.setup(
         'Typing :: Typed',
     ],
 
-    python_requires='>=3.8<=3.10',
+    python_requires='>=3.8',
 )

@@ -6,7 +6,6 @@ import urllib.request
 from http.client import HTTPResponse
 from urllib.parse import urlparse
 
-import EasyProxies
 import spys.me
 from requests import Response, request
 
@@ -28,12 +27,9 @@ class Service:
     def __repr__(self):
         return f'<{self.__class__.__name__}({self.netloc!r}, {self.method!r})>'
 
-    def request(self, mail: str, proxies: EasyProxies.ProxyDescriptor | spys.me.BaseProxyView = None) -> Response:
-        if isinstance(proxies, EasyProxies.ProxyDescriptor):
-            proxies = proxies.as_requests_proxy if proxies else None
-        else:
-            proxies = f'socks5://{proxies}'
-            proxies = {'http': proxies, 'https': proxies}
+    def request(self, mail: str, proxies: spys.me.BaseProxyView = None) -> Response:
+        proxies = f'socks5://{proxies}'
+        proxies = {'http': proxies, 'https': proxies}
 
         for ua_n in ('user-agent', 'User-Agent'):
             resp = request(self.method, self.url.replace('%s', mail), headers={ua_n: random_ua()},

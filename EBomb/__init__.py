@@ -29,7 +29,7 @@ class EBomb:
         self._max_netloc_len = max(len(serv.netloc or '') for serv in services)
         self._max_email_len = max(len(e) for e in targets)
         if proxy:
-            self.__proxies = [*spys.me.Getters.get_socks5_proxies()]  # Proxies.get(limit=20, type='socks5')
+            self.__proxies = [*spys.me.Getters.get_socks5_proxies()]
             self._working_proxy = sorted(self.__proxies, key=str)[0]
         else:
             self._working_proxy = None
@@ -46,7 +46,7 @@ class EBomb:
     @property
     def proxies(self):
         if self.proxy and not self.__proxies:
-            self.__proxies += spys.me.Getters.get_socks5_proxies()  # Proxies.get(limit=20, type='socks5')
+            self.__proxies += spys.me.Getters.get_socks5_proxies()
         return self.__proxies
 
     def start(self, threads_count: int):
