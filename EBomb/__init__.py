@@ -50,11 +50,13 @@ class EBomb:
         return self.__proxies
 
     def start(self, threads_count: int):
-        print(f"Services: {len(services)}\n"
-              f"Proxy: {self.proxy}\n"
-              f"Emails: {'; '.join(f'{i!r}' for i in self.targets)}\n"
-              f"{'HOST':^{self._max_netloc_len}} / METH | {'EMAIL':^{self._max_email_len}}"
-              f"{' |         PROXY         ' if self.proxy else ''} | RESPONSE")
+        print(
+            "Starting... CTRL+BREAK to exit.\n"
+            f"Services: {len(services)}\n"
+            f"Proxy: {self.proxy}\n"
+            f"Emails: {'; '.join(f'{i!r}' for i in self.targets)}\n"
+            f"{'HOST':^{self._max_netloc_len}} / METH | {'EMAIL':^{self._max_email_len}}"
+            f"{' |         PROXY         ' if self.proxy else ''} | RESPONSE")
         args = [(service, email) for email in self.targets for service in services]
 
         def _starter():
@@ -65,7 +67,6 @@ class EBomb:
             with ThreadPool(threads_count) as pool:
                 pool.starmap(self.request, args)
 
-        print('Starting... CTRL+BREAK to exit.', flush=True)
         if self.forever:
             while True:
                 _starter()
