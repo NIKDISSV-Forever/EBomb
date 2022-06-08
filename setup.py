@@ -8,10 +8,10 @@ with open('requires.txt', encoding='UTF-8') as f:
 setuptools.setup(
     name="EBomb",
 
-    version="1.2.1",
+    version="1.3.0",
 
     author="Nikita (NIKDISSV)",
-    author_email="nikdissv.forever@protonmail.com",
+    author_email="nikdissv@proton.me",
 
     description="Email Bomber",
     long_description=long_description,
@@ -20,6 +20,7 @@ setuptools.setup(
     url="https://github.com/NIKDISSV-Forever/EBomb",
     install_requires=install_requires,
     packages=setuptools.find_packages(),
+
     package_dir={'EBomb': 'EBomb'},
     package_data={'EBomb': ['services.json']},
     classifiers=[
@@ -30,5 +31,5 @@ setuptools.setup(
         'Typing :: Typed',
     ],
 
-    python_requires='>=3.9',
+    python_requires='>=3.8<=3.10',
 )

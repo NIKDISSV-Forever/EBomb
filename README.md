@@ -1,8 +1,6 @@
-#### Documentation in Russian
+# EBomb - Email(s) bomber
 
-# EBomb - Спам на почту/ы
-
-> pip install [EBomb](https://pypi.org/project/EBomb/)
+> pip install [EBomb](https://pypi.org/project/EBomb/) --upgrade
 
 ```python
 # EBomb/__init__.py
@@ -20,14 +18,11 @@ class EBomb:
 class Service:
     __slots__ = ('url', 'method', 'netloc')
 
-    def __init__(self, url: str, method: str):
-        ...
+    def __init__(self, url: str, method: str): ...
 
-    def __repr__(self):
-        ...
+    def __repr__(self): ...
 
-    def request(self, mail: str, proxies: Optional[EasyProxies.ProxyDescriptor] = None) -> Response:
-        ...
+    def request(self, mail: str, proxies: EasyProxies.ProxyDescriptor = None) -> requests.Response: ...
 
 
 services: list[Service] = [...]

@@ -1,4 +1,4 @@
 requests
-EasyProxies
 pysocks
+spys
 fake_useragent
