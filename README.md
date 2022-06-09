@@ -1,6 +1,6 @@
 # EBomb - Email(s) bomber
 
-> pip install [EBomb](https://pypi.org/project/EBomb/) --upgrade
+> pip install --upgrade [EBomb](https://pypi.org/project/EBomb/)
 
 ```python
 # EBomb/__init__.py
@@ -42,3 +42,8 @@ services: list[Service] = [...]
 ### CLI
 
 > python -m Ebomb -h
+
+
+# Install for Android / Linux
+- Download [Termux](https://github.com/termux/termux-app/releases) _(Android)_
+- Follow the steps from [the article](https://te.legra.ph/EBomb-06-08)
