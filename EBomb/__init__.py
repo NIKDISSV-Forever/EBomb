@@ -17,12 +17,12 @@ from EBomb.services import *
 __all__ = ('EBomb', 'Service', 'services')
 
 
-def _get_socks5_proxies() -> list[EasyProxies.ProxyDescriptor | spys.me.ProxyView]:
+def _get_socks5_proxies() -> list[str]:
     try:
         return EasyProxies.Proxies.get(format='txt', type='socks5')
     except URLError:
         pass
-    return [*spys.me.Getters.get_socks5_proxies()]
+    return [str(i) for i in spys.me.Getters.get_socks5_proxies()]
 
 
 class EBomb:
@@ -57,7 +57,7 @@ class EBomb:
 
         if proxy:
             self.__proxies = _get_socks5_proxies()
-            self._working_proxy = sorted(self.__proxies, key=str)[0]
+            self._working_proxy = sorted(self.__proxies)[0]
         else:
             self._working_proxy = None
             self.__proxies = []
@@ -68,7 +68,7 @@ class EBomb:
     @property
     def working_proxy(self):
         if not (self._working_proxy and self._working_proxy in self.proxies):
-            self._working_proxy = sorted(self.proxies, key=str)[0]
+            self._working_proxy = sorted(self.proxies)[0]
         return self._working_proxy
 
     @property
