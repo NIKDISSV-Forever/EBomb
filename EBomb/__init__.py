@@ -5,7 +5,9 @@ import multiprocessing
 import reprlib
 import shutil
 from multiprocessing.pool import ThreadPool
+from urllib.error import URLError
 
+import EasyProxies
 import spys.me
 from requests.exceptions import RequestException
 from rich.console import Console
@@ -13,6 +15,14 @@ from rich.console import Console
 from EBomb.services import *
 
 __all__ = ('EBomb', 'Service', 'services')
+
+
+def _get_socks5_proxies() -> list[EasyProxies.ProxyDescriptor | spys.me.ProxyView]:
+    try:
+        return EasyProxies.Proxies.get(format='txt', type='socks5')
+    except URLError:
+        pass
+    return [*spys.me.Getters.get_socks5_proxies()]
 
 
 class EBomb:
@@ -46,7 +56,7 @@ class EBomb:
         self._repr = self._Repr(70 + self._max_netloc_len + self._max_email_len)
 
         if proxy:
-            self.__proxies = [*spys.me.Getters.get_socks5_proxies()]
+            self.__proxies = _get_socks5_proxies()
             self._working_proxy = sorted(self.__proxies, key=str)[0]
         else:
             self._working_proxy = None
@@ -64,7 +74,7 @@ class EBomb:
     @property
     def proxies(self):
         if self.proxy and not self.__proxies:
-            self.__proxies += spys.me.Getters.get_socks5_proxies()
+            self.__proxies += _get_socks5_proxies()
         return self.__proxies
 
     def start(self, threads_count: int = None):
