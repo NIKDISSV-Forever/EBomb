@@ -11,7 +11,7 @@ from requests import Response, request
 
 from EBomb.ua import random_ua
 
-__all__ = ('Service', 'services', 'JSON_DB_FILE_PATH')
+__all__ = ('Service', 'services', 'UNIQUE_NETLOC', 'JSON_DB_FILE_PATH')
 
 JSON_DB_FILE_PATH = pathlib.Path(__file__).parent / 'services.json'
 
@@ -50,4 +50,6 @@ def _get_services_from_json():
         return json.load(to_load)
 
 
-services = [Service(**serv) for serv in _get_services_from_json()]
+_DB = _get_services_from_json()
+services = [Service(**serv) for serv in _DB]
+UNIQUE_NETLOC = len({urllib.parse.urlparse(i.get('url')).netloc for i in _DB})

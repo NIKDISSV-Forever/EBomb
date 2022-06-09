@@ -41,13 +41,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('targets', type=str, nargs='+',
                         help='Email addresses separated by spaces.')
-    parser.add_argument('--threads-count', '-tc', type=int, default=1)
+    parser.add_argument('--threads-count', '-tc', type=int)
     parser.add_argument('--proxy', action=argparse.BooleanOptionalAction, help='Use proxy.')
     parser.add_argument('--forever', action=argparse.BooleanOptionalAction, default=True,
                         help='Run forever, otherwise only one circle.')
     parser.add_argument('--verbose', action=argparse.BooleanOptionalAction, default=True,
                         help='Display something on the screen.')
-    EBomb.EBomb(**parser.parse_args().__dict__)
+    args = parser.parse_args().__dict__
+    tc = args.pop('threads_count')
+    EBomb.EBomb(**args).start(tc)
 
 
 if __name__ == '__main__':
