@@ -4,6 +4,7 @@ import json
 import multiprocessing
 import reprlib
 import shutil
+import sys
 from multiprocessing.pool import ThreadPool
 from urllib.error import URLError
 
@@ -15,14 +16,6 @@ from rich.console import Console
 from EBomb.services import *
 
 __all__ = ('EBomb', 'Service', 'services')
-
-
-def _get_socks5_proxies() -> list[str]:
-    try:
-        return EasyProxies.Proxies.get(format='txt', type='socks5')
-    except URLError:
-        pass
-    return [str(i) for i in spys.me.Getters.get_socks5_proxies()]
 
 
 class EBomb:
@@ -38,10 +31,9 @@ class EBomb:
 
         def __init__(self, max_right_align: int):
             super().__init__()
-            self.maxother = shutil.get_terminal_size().columns - max_right_align
+            self.maxother = max(shutil.get_terminal_size().columns - max_right_align, 6)
 
-    def __init__(self, targets: list[str], threads_count: int = None, proxy: bool = True, forever: bool = True,
-                 verbose: bool = True):
+    def __init__(self, targets: list[str], proxy: bool = True, forever: bool = True, verbose: bool = True):
         self.console = Console()
         self.console.quiet = not verbose
 
@@ -56,14 +48,66 @@ class EBomb:
         self._repr = self._Repr(70 + self._max_netloc_len + self._max_email_len)
 
         if proxy:
-            self.__proxies = _get_socks5_proxies()
+            self.__proxies = self._socks5_proxies
             self._working_proxy = sorted(self.__proxies)[0]
         else:
             self._working_proxy = None
-            self.__proxies = []
+            self.__proxies = {*()}
         self.proxy = proxy
 
-        self.start(threads_count)
+    def start(self, threads_count: int = None):
+        if threads_count is None:
+            threads_count = multiprocessing.cpu_count()
+        if threads_count < 1:
+            threads_count = 1
+
+        _urls = len(services)
+        _n_urls_color = 'green' if _urls else 'red'
+        _proxy_color = 'green' if self.proxy else 'red'
+
+        args = [(service, email) for email in self.targets for service in services]
+
+        self.console.print(
+            f"[blue][italic]Running "
+            f"{'[green]forever[/green]' if self.forever else f'on [green]{len(args)}[/green] calls'} "
+            f"([green]{threads_count}[/green] thread{'s' if threads_count != 1 else ''})... "
+            "[bold red]CTRL+BREAK[/bold red] to exit.[/italic]\n"
+            f"URL{'s' if _urls > 1 else ''}: [{_n_urls_color}]{_urls}[/{_n_urls_color}] "
+            f"[italic]([{_n_urls_color}]{UNIQUE_NETLOC}[/{_n_urls_color}] service{'s' if UNIQUE_NETLOC > 1 else ''})"
+            "[/italic]\n"
+            f"Proxy: [{_proxy_color}]{self.proxy}[/{_proxy_color}]\n"
+            f"Email{'s' if len(self.targets) > 1 else ''}: [yellow]{'; '.join(f'{i}' for i in self.targets)}[/yellow]\n"
+            f"{'HOST':^{self._max_netloc_len}} / METH | {'EMAIL':^{self._max_email_len}}"
+            f"{' |         PROXY         ' if self.proxy else ''} | RESPONSE[/blue]"
+        )
+
+        if threads_count == 1:
+            def _starter():
+                for arg in args:
+                    self.request(*arg)
+        else:
+            def _starter():
+                with ThreadPool(threads_count) as pool:
+                    pool.starmap(self.request, args)
+
+        if self.forever:
+            while True:
+                _starter()
+        else:
+            _starter()
+
+    @property
+    def _socks5_proxies(self) -> set[str]:
+        try:
+            return {*(EasyProxies.Proxies.get(format='txt', type='socks5', uptime=100)
+                      or EasyProxies.Proxies.get(format='txt', type='socks5'))}
+        except URLError:
+            pass
+        try:
+            return {str(i) for i in spys.me.Getters.get_socks5_proxies()}
+        except Exception as e:
+            self.console.log('Getting proxies error:', e)
+            sys.exit(1)
 
     @property
     def working_proxy(self):
@@ -72,42 +116,10 @@ class EBomb:
         return self._working_proxy
 
     @property
-    def proxies(self):
+    def proxies(self) -> set[str]:
         if self.proxy and not self.__proxies:
-            self.__proxies += _get_socks5_proxies()
+            self.__proxies |= self._socks5_proxies
         return self.__proxies
-
-    def start(self, threads_count: int = None):
-        _urls = len(services)
-        _n_urls_color = 'green' if _urls else 'red'
-        _proxy_color = 'green' if self.proxy else 'red'
-        self.console.print(
-            "[blue][italic]Starting... [bold red]CTRL+BREAK[/bold red] to exit.[/italic]\n"
-            f"URL{'s' if _urls > 1 else ''}: [{_n_urls_color}]{_urls}[/{_n_urls_color}] "
-            f"[italic]([{_n_urls_color}]{UNIQUE_NETLOC}[/{_n_urls_color}] service{'s' if UNIQUE_NETLOC > 1 else ''})[/italic]\n"
-            f"Proxy: [{_proxy_color}]{self.proxy}[/{_proxy_color}]\n"
-            f"Email{'s' if len(self.targets) > 1 else ''}: [yellow]{'; '.join(f'{i}' for i in self.targets)}[/yellow]\n"
-            f"{'HOST':^{self._max_netloc_len}} / METH | {'EMAIL':^{self._max_email_len}}"
-            f"{' |         PROXY         ' if self.proxy else ''} | RESPONSE[/blue]")
-        args = [(service, email) for email in self.targets for service in services]
-        if threads_count is None:
-            threads_count = 1 if self.proxy else multiprocessing.cpu_count()
-        if threads_count < 1:
-            threads_count = 1
-
-        def _starter():
-            if threads_count == 1:
-                for arg in args:
-                    self.request(*arg)
-                return
-            with ThreadPool(threads_count) as pool:
-                pool.starmap(self.request, args)
-
-        if self.forever:
-            while True:
-                _starter()
-        else:
-            _starter()
 
     def request(self, service: Service, email: str):
         _proxy = self.working_proxy
@@ -129,7 +141,7 @@ class EBomb:
                     services[pos].url = new_loc
                     services[pos].method = 'GET' if code == 301 else 'POST'
                 else:
-                    _markup.service = 'yellow'
+                    _markup.service = 'red'
                     services.pop(pos)
             elif code == 403:
                 _markup.service = 'italic red'

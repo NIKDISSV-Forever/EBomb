@@ -27,9 +27,10 @@ class Service:
     def __repr__(self):
         return f'<{self.__class__.__name__}({self.netloc!r}, {self.method!r})>'
 
-    def request(self, mail: str, proxies: spys.me.BaseProxyView = None) -> Response:
-        proxies = f'socks5://{proxies}'
-        proxies = {'http': proxies, 'https': proxies}
+    def request(self, mail: str, proxies: str = None) -> Response:
+        if proxies is not None:
+            proxies = f'socks5://{proxies}'
+            proxies = {'http': proxies, 'https': proxies}
 
         for ua_n in ('user-agent', 'User-Agent'):
             resp = request(self.method, self.url.replace('%s', mail), headers={ua_n: random_ua()},
