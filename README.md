@@ -39,7 +39,7 @@ services: list[Service] = [...]
 ]
 ```
 
-### CLI
+# CLI
 
 > python -m Ebomb -h
 
