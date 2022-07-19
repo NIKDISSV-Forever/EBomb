@@ -4,6 +4,8 @@ import EBomb
 
 if not hasattr(argparse, 'BooleanOptionalAction'):
     class BooleanOptionalAction(argparse.Action):
+        __slots__ = ()
+
         def __init__(self, option_strings, dest, default=None, type=None,
                      choices=None, required=False, help=None, metavar=None):
 

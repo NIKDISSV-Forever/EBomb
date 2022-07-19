@@ -1,6 +1,6 @@
 from fake_useragent import UserAgent
 
-__all__ = ('random_ua',)
+__all__ = 'random_ua',
 _ua = UserAgent()
 
 

