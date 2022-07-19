@@ -6,7 +6,6 @@
 
 > python -m Ebomb -h
 
-
 ```python
 # EBomb/__init__.py
 class EBomb:
@@ -35,13 +34,12 @@ services: list[Service] = [...]
 
 ```json
 [
-  {
-    "url": "...",
-    "method": "..."
-  }
+  [
+    "METHOD",
+    "URL"  // %s instead of email
+  ]
 ]
 ```
-
 
 # Install for Android / Linux
 
