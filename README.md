@@ -1,6 +1,6 @@
 # EBomb - Email(s) bomber
 
-> pip install -U [EBomb](https://pypi.org/project/EBomb/)
+> pip install -U [EBomb](https://pypi.org/project/EBomb)
 
 # CLI
 
@@ -30,15 +30,14 @@ class Service:
 services: list[Service] = [...]
 ```
 
-## Ebomb/services.json
+## Ebomb/services.txt
 
-```json
-[
-  [
-    "METHOD",
-    "URL"  // %s instead of email
-  ]
-]
+```
+METHOD
+URL with %s instead of email
+
+METHOD
+URL with %s instead of email
 ```
 
 # Install for Android / Linux

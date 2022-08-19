@@ -8,7 +8,7 @@ with open('requirements.txt', encoding='UTF-8') as f:
 setuptools.setup(
     name="EBomb",
 
-    version="2.1.6",
+    version="2.2.0",
 
     author="Nikita (NIKDISSV)",
     author_email="nikdissv@proton.me",
@@ -22,7 +22,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
 
     package_dir={'EBomb': 'EBomb'},
-    package_data={'EBomb': ['services.json']},
+    package_data={'EBomb': ['services.txt']},
     classifiers=[
         'Programming Language :: Python :: 3.10',
         'Development Status :: 5 - Production/Stable',

