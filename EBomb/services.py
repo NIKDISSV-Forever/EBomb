@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from EBomb.ua import random_ua
+from EBomb._ua import random_ua
 
 __all__ = ('Service', 'services', 'UNIQUE_NETLOC', 'SERVICES_DB_FILE_PATH')
 
