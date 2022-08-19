@@ -4,7 +4,7 @@
 
 # CLI
 
-> python -m Ebomb -h
+> python -m Ebomb --help
 
 ```python
 # EBomb/__init__.py

